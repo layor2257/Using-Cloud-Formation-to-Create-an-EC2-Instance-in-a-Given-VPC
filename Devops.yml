@@ -1,0 +1,45 @@
+Parameters:
+  MyVPC:
+      Description: VPC used to deploy our resources below
+      Type: AWS::EC2::MyVPC::vpc-072b94b18c5941f8f
+  PublicSubnet: 
+      Description: Subnet to be used for our web server
+      Type: AWS:EC2::Subnet::subnet-0388374c7f52b5fe2
+  AMItouse:
+      Description: AMI to use for our base image
+      Type: String   
+Resources:
+  myWebAccessSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to our test host
+      VpcID: vpc-072b94b18c5941f8f
+        Ref: MyVPC
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+      - IpProtocol: -1
+      FromPort: -1
+      ToPort: -1
+      CidrIp: 0.0.0.0/0
+myWebserverInstance:
+  Type: AWS::EC2::Instance
+  Properties:
+    InstanceType: t3.micro
+    ImageID: ami-0022f774911c1d690
+    NetworkInterfaces:
+      -  AssociatePublicIpAddress: "true"
+      DeviceIndex: "0"
+      GroupSet:
+        - Ref: "myWebAccessSecurityGroup"
+        SubnetId:
+          Ref:  subnet-0388374c7f52b5fe2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
